@@ -1,54 +1,31 @@
 # deezy-auto-earn
 
-automatically open channels to deezy, push sats through, and earn
+Automatically open channels to deezy, push sats through, and earn
 
-## setup
+## Table Of Contents
 
-```
-git clone git@github.com:dannydeezy/deezy-auto-earn.git
-cd deezy-auto-earn
-cp sample-config.json config.json
-# edit config.json with your custom values
-npm i
-```
+- [Packages](#packages)
+- [Deezy Service docs](packages/deezy-service/README.md)
+- [Linting/verifying your Source Code](#lintingverifying-your-source-code)
 
-## run once
+### Packages
 
-```
-node index.js
-```
-
-## run continously (recommended)
-
-it is recommended to run this as a systemd service.
-
-note you may want to make the following edits to the `deezy-auto-earn-example.service` file:
-
-- change username from `ubuntu` to your user
-- update `RestartSec` to your desired interval, which will determine how frequently the script runs
+Each package has it's own responsability.
+By making them separate allow us to publish this service into tools like umbrel in which as a good practice, it's element is it's own container, and they all interact together via docker-compose.
 
 ```
-sudo cp deezy-auto-earn-example.service /etc/systemd/system/deezy-auto-earn.service
-sudo systemctl enable deezy-auto-earn.service
-sudo systemctl start deezy-auto-earn
+└ packages/
+      └ deezy-service # Deamon that auto earns
+        deezy-api # Api to interact with the deamon
+        deezy-ui # UI that interacts with the API
 ```
 
-note, doing `enable` means it will always start up when your machine restarts
+### Linting/verifying your Source Code
 
-to follow the logs:
+You can check that your code is properly formatted and adheres to coding style by running:
 
-```
-journalctl -fu deezy-auto-earn -n 100
-```
-
-to stop the service:
+To format all files run
 
 ```
-sudo systemctl stop deezy-auto-earn
-```
-
-to restart the service:
-
-```
-sudo systemctl restart deezy-auto-earn
+npm run lint -ws
 ```
