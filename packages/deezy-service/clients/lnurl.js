@@ -1,4 +1,5 @@
 const { requestInvoice, utils } = require('lnurl-pay');
+
 const { isOnionUrl, decodeUrlOrAddress } = utils;
 const torAxios = require('tor-axios');
 const config = require('../config.json');
@@ -8,13 +9,13 @@ const tor = torAxios.torSetup({
   port: config.TOR_PORT || 9050,
 });
 
-async function torGet ({ url, params }) {
+async function torGet({ url, params }) {
   console.log({ url, params });
   const resp = await tor.get(url, { params });
   return resp.data;
 }
 
-async function fetchInvoice ({ lnUrlOrAddress, paymentAmountSats }) {
+async function fetchInvoice({ lnUrlOrAddress, paymentAmountSats }) {
   const url = decodeUrlOrAddress(lnUrlOrAddress);
   console.log(url);
   const isOnion = isOnionUrl(url);

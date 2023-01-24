@@ -1,20 +1,25 @@
-const { getChannels, pay, signMessage, getChainBalance, getPendingChannels, openChannel, getNode, addPeer, getPeers, getChainFeeRate } = require('ln-service');
+const {
+  getChannels, pay, signMessage, getChainBalance, getPendingChannels, openChannel, getNode, addPeer, getPeers, getChainFeeRate,
+} = require('ln-service');
+const axios = require('axios');
 const lnurlClient = require('./clients/lnurl');
 const bitfinexClient = require('./clients/bitfinex');
 
-const axios = require('axios');
 const config = require('./config.json');
 const { lnd } = require('./lnd');
+
 const PATHFINDING_TIMEOUT_MS = config.PATHFINDING_TIMEOUT_MS || 60 * 1000; // 1 minute
 const DEEZY_PUBKEY = '024bfaf0cabe7f874fd33ebf7c6f4e5385971fc504ef3f492432e9e3ec77e1b5cf';
 const CHAIN_BALANCE_BUFFER = 50000;
 
-async function tryPayInvoice ({ invoice, paymentAmountSats, maxRouteFeePpm, outChannelIds }) {
+async function tryPayInvoice({
+  invoice, paymentAmountSats, maxRouteFeePpm, outChannelIds,
+}) {
   const maxRouteFeeSats = Math.floor((maxRouteFeePpm * paymentAmountSats) / 1000000);
   console.log(`Using max route fee sats ${maxRouteFeeSats}`);
 
   // Sometimes LND hangs too long when trying to pay, and we need to kill the process.
-  function abortMission () {
+  function abortMission() {
     console.error('Payment timeout exceeded without terminating. Exiting!');
     process.exit(1);
   }
@@ -39,7 +44,7 @@ async function tryPayInvoice ({ invoice, paymentAmountSats, maxRouteFeePpm, outC
   console.log(`Payment confirmed, with fee ${paymentResult.safe_fee} satoshis, and ppm ${feePpm}`);
 }
 
-async function attemptPaymentToDestination ({ destination, outChannelIds }) {
+async function attemptPaymentToDestination({ destination, outChannelIds }) {
   let invoice;
   const paymentAmountSats = destination.PAYMENT_AMOUNT_SATS;
   switch (destination.TYPE) {
@@ -75,11 +80,11 @@ async function attemptPaymentToDestination ({ destination, outChannelIds }) {
   });
 }
 
-function isReadyToEarnAndClose ({ channel }) {
+function isReadyToEarnAndClose({ channel }) {
   return (channel.local_balance * 1.0) / channel.capacity < 1 - config.CLOSE_WHEN_CHANNEL_EXCEEDS_RATIO;
 }
 
-async function earnAndClose ({ channel }) {
+async function earnAndClose({ channel }) {
   const channelPoint = `${channel.transaction_id}:${channel.transaction_vout}`;
   console.log(`Requesting earn and close for deezy channel: ${channelPoint}`);
   const message = `close ${channelPoint}`;
@@ -99,7 +104,7 @@ async function earnAndClose ({ channel }) {
   console.log(response.data);
 }
 
-async function maybeOpenChannel ({ localInitiatedDeezyChannels }) {
+async function maybeOpenChannel({ localInitiatedDeezyChannels }) {
   const currentLocalSats = localInitiatedDeezyChannels.reduce((acc, it) => acc + it.local_balance, 0);
   const { pending_channels } = await getPendingChannels({ lnd });
   const pendingOpenLocalSats = pending_channels.reduce((acc, it) => acc + it.local_balance, 0);
@@ -108,7 +113,7 @@ async function maybeOpenChannel ({ localInitiatedDeezyChannels }) {
   console.log(`Total local open or pending sats: ${totalLocalSats}`);
   if (totalLocalSats > (config.OPEN_CHANNEL_WHEN_LOCAL_SATS_BELOW || 0)) {
     console.log(`Not opening channel, total local sats ${totalLocalSats} is above threshold ${config.OPEN_CHANNEL_WHEN_LOCAL_SATS_BELOW}`);
-    return;
+    return false;
   }
 
   const chainBalance = (await getChainBalance({ lnd })).chain_balance;
@@ -116,15 +121,15 @@ async function maybeOpenChannel ({ localInitiatedDeezyChannels }) {
 
   if (chainBalance < config.DEEZY_CHANNEL_SIZE_SATS + CHAIN_BALANCE_BUFFER) {
     console.log(`Not opening channel, chain balance ${chainBalance} is below threshold ${config.DEEZY_CHANNEL_SIZE_SATS} plus buffer ${CHAIN_BALANCE_BUFFER}`);
-    return;
+    return false;
   }
 
   console.log(`Opening channel with ${DEEZY_PUBKEY} for ${config.DEEZY_CHANNEL_SIZE_SATS} sats`);
   const { tokens_per_vbyte } = await getChainFeeRate({ lnd }).catch((err) => {
     console.error(err);
-    return {};
+    return false;
   });
-  if (!tokens_per_vbyte) return;
+  if (!tokens_per_vbyte) return false;
 
   const channelOpenFeeRate = config.MAX_CHANNEL_OPEN_FEE_SATS_PER_VBYTE ? Math.min(tokens_per_vbyte, config.MAX_CHANNEL_OPEN_FEE_SATS_PER_VBYTE) : tokens_per_vbyte;
   const { transaction_id, transaction_vout } = await openChannel({
@@ -135,14 +140,14 @@ async function maybeOpenChannel ({ localInitiatedDeezyChannels }) {
     is_private: config.PRIVATE_CHANNEL,
   }).catch((err) => {
     console.error(err);
-    return {};
+    return false;
   });
   if (!transaction_id || !transaction_vout) return false;
   console.log(`Initiated channel with deezy, txid ${transaction_id}, vout ${transaction_vout}`);
   return true;
 }
 
-async function ensureConnectedToDeezy () {
+async function ensureConnectedToDeezy() {
   const { peers } = await getPeers({ lnd });
   const deezyPeer = peers.find((it) => it.public_key === DEEZY_PUBKEY);
   if (deezyPeer) {
@@ -156,7 +161,7 @@ async function ensureConnectedToDeezy () {
   });
 }
 
-async function maybeAutoWithdraw ({ destination }) {
+async function maybeAutoWithdraw({ destination }) {
   if (destination.type !== 'BITFINEX') {
     console.log('AUTO_WITHDRAW is currently only enabled for BITFINEX destinations');
     return;
@@ -169,7 +174,7 @@ async function maybeAutoWithdraw ({ destination }) {
   });
 }
 
-async function run () {
+async function run() {
   await ensureConnectedToDeezy();
   console.log('Fetching channel info');
   const { channels } = await getChannels({
@@ -184,8 +189,11 @@ async function run () {
   console.log(`Found ${localInitiatedDeezyChannels.length} locally initiated channel(s) with deezy`);
 
   console.log('Checking if any deezy channels are ready to close');
-  for (const channel of localInitiatedDeezyChannels) {
+  for (let i = 0; i < localInitiatedDeezyChannels.length; i++) {
+    const channel = localInitiatedDeezyChannels[i];
     if (isReadyToEarnAndClose({ channel })) {
+      // TODO: Use parallelism here
+      // eslint-disable-next-line no-await-in-loop
       await earnAndClose({ channel });
       // Terminate here if we are closing a channel.
       console.log('Attempted to earn and close channel, terminating here.');
@@ -194,7 +202,8 @@ async function run () {
   }
 
   console.log('Checking if we should open a channel to deezy');
-  await maybeOpenChannel({ localInitiatedDeezyChannels });
+  const t = await maybeOpenChannel({ localInitiatedDeezyChannels });
+  console.log(`maybeOpenChannel returned ${t}`);
 
   const outChannelIds = localInitiatedDeezyChannels.map((it) => it.id);
   if (outChannelIds.length === 0) {
@@ -202,11 +211,14 @@ async function run () {
     return;
   }
 
-  for (const destination of config.DESTINATIONS) {
+  for (let i = 0; i < config.DESTINATIONS.length; i++) {
+    const destination = config.DESTINATIONS[i];
+    // eslint-disable-next-line no-await-in-loop
     await attemptPaymentToDestination({ destination, outChannelIds }).catch((err) => {
       console.error(err);
     });
     if (destination.AUTO_WITHDRAW) {
+      // eslint-disable-next-line no-await-in-loop
       await maybeAutoWithdraw({ destination }).catch((err) => {
         console.error(err);
       });

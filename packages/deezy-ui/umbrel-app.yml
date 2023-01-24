@@ -1,0 +1,25 @@
+manifestVersion: 1
+id: deezy
+category: Explorers
+name: Deezy Earn
+version: "3.3.0"
+tagline: earn reliably by providing liquidity to the deezy node
+description: >-
+  earn reliably by providing liquidity to the deezy node.
+  Open a channel, push sats through, and deezy will pay you handsomely to close the channel.
+releaseNotes: >-
+  Deezy auto earn is finally here!, Set some configurations and start earning
+developer: Danny Deezy
+website: https://deezy.io
+dependencies:
+  - lightning
+repo: https://github.com/andredevjs/deezy-auto-earn
+support: https://github.com/andredevjs/deezy-auto-earn/discussions
+port: 8080
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+path: ""
+defaultUsername: ""
+defaultPassword: ""

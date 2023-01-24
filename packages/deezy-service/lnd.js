@@ -1,8 +1,9 @@
 const { authenticatedLndGrpc } = require('ln-service');
 
 const fs = require('fs');
-const config = require('./config');
 const os = require('os');
+const config = require('./config.json');
+
 const HOME_PATH = os.homedir();
 
 const { lnd } = authenticatedLndGrpc({

@@ -4,7 +4,7 @@
     "commonjs": true,
     "es2021": true
   },
-  "extends": "standard",
+  "extends": ["airbnb-base"],
   "overrides": [],
   "parserOptions": {
     "ecmaVersion": "latest"
@@ -12,6 +12,8 @@
   "rules": {
     "semi": ["error", "always"],
     "comma-dangle": ["error", "always-multiline"],
+    "max-len": ["error", { "code": 180 }],
+    "no-plusplus": "off",
     "camelcase": [
       "error",
       {
