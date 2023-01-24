@@ -52,3 +52,17 @@ to restart the service:
 ```
 sudo systemctl restart deezy-auto-earn
 ```
+
+### Docker
+
+Build the image
+
+```
+docker build -t deezy-earn-service .
+```
+
+Run
+
+```
+docker run -it -p 9615:9615 -v /lnd /config --rm --name deezy-earn-service_1 deezy-earn-service
+```
