@@ -1,8 +1,15 @@
-const { createLogger, format, transports } = require("winston");
+const fs = require('fs')
 const path = require('path');
+
+const { createLogger, format, transports } = require("winston");
 const isRunningOnDocker = require("./isRunningOnDocker");
 
-const basePath = path.join(__dirname, '../');
+const basePath = path.join(__dirname, '../', 'logs');
+
+// create basePath folder if it doesn't exist
+if (!fs.existsSync(basePath)) {
+    fs.mkdirSync(basePath);
+}
 
 const _LOGS_PATH = path.join(basePath, "exceptions.log");
 const _EXCEPTIONS_PATH = path.join(basePath, "exceptions.log");
