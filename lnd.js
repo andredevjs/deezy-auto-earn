@@ -7,15 +7,18 @@ const config = require('./config/config.json')
 const os = require('os');
 const HOME_PATH = os.homedir()
 
-const certPath = config.OMIT_TLS_CERT || `${HOME_PATH}/.lnd/tls.cert`;
-const macaroonPath = config.MACAROON_PATH || `${HOME_PATH}/.lnd/data/chain/bitcoin/mainnet/admin.macaroon`;
-const socket = config.SOCKET || 'localhost:10009';
-logger.debug('Lnd configuration', { data: { certPath, macaroonPath, socket } });
+const c = {
+    cert: config.OMIT_TLS_CERT
+      ? undefined
+      : fs.readFileSync(config.TLS_CERT_PATH || `${HOME_PATH}/.lnd/tls.cert`, { encoding: 'base64' }),
+    macaroon: fs.readFileSync(config.MACAROON_PATH || `${HOME_PATH}/.lnd/data/chain/bitcoin/mainnet/admin.macaroon`, {
+      encoding: 'base64',
+    }),
+    socket: config.SOCKET || 'localhost:1001',
+  };
 
-const { lnd } = authenticatedLndGrpc({
-    cert: fs.readFileSync(certPath, { encoding: 'base64' }),
-    macaroon: fs.readFileSync(macaroonPath, { encoding: 'base64' }),
-    socket
-});
+logger.debug('Lnd configuration', { data: c });
+
+const { lnd } = authenticatedLndGrpc(c);
 
 module.exports = { lnd }
