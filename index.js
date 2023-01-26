@@ -1,10 +1,10 @@
 const { getChannels, pay, signMessage, getChainBalance, getPendingChannels, openChannel, getNode, addPeer, getPeers, getChainFeeRate } = require('ln-service')
-const { logger } = require('../utils/logger');
+const { logger } = require('./utils/logger');
 const lnurlClient = require('./clients/lnurl')
 const bitfinexClient = require('./clients/bitfinex')
 
 const axios = require('axios')
-const config = require('./config.json')
+const config = require('./config/config.json')
 const { lnd } = require('./lnd')
 const PATHFINDING_TIMEOUT_MS = config.PATHFINDING_TIMEOUT_MS || 60 * 1000 // 1 minute
 const DEEZY_PUBKEY = '024bfaf0cabe7f874fd33ebf7c6f4e5385971fc504ef3f492432e9e3ec77e1b5cf'

@@ -12,4 +12,4 @@ RUN npm install pm2@3.5.1 -g
 RUN pm2 install pm2-server-monit
 
 EXPOSE 9615
-CMD ["pm2-runtime", "index.js", "--web"]
+CMD ["pm2-runtime", "ecosystem.config.js", "--web"]

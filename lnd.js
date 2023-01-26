@@ -1,9 +1,9 @@
 const {
     authenticatedLndGrpc
 } = require('ln-service');
-const { logger } = require('../utils/logger');
+const { logger } = require('./utils/logger');
 const fs = require('fs')
-const config = require('./config')
+const config = require('./config/config.json')
 const os = require('os');
 const HOME_PATH = os.homedir()
 

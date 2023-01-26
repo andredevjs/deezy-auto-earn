@@ -3,7 +3,7 @@ const { requestInvoice, utils } = require('lnurl-pay')
 const { isOnionUrl, decodeUrlOrAddress } = utils
 const { logger } = require('../utils/logger');
 const tor_axios = require('tor-axios');
-const config = require('../config.json')
+const config = require('../config/config.json')
 
 const torSetup = {
     ip: config.TOR_HOST,

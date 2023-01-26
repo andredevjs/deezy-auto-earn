@@ -11,9 +11,9 @@ if (!fs.existsSync(basePath)) {
     fs.mkdirSync(basePath);
 }
 
-const _LOGS_PATH = path.join(basePath, "exceptions.log");
-const _EXCEPTIONS_PATH = path.join(basePath, "exceptions.log");
-const _REJECTIONS_PATH = path.join(basePath,"rejections.log");
+const _LOGS_PATH = path.join(basePath, "deezy.log");
+const _EXCEPTIONS_PATH = path.join(basePath, "deezy.log");
+const _REJECTIONS_PATH = path.join(basePath,"deezy.log");
 
 const isDocker = isRunningOnDocker();
 
